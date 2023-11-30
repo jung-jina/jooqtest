@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version '3.1.5'
     id 'io.spring.dependency-management' version '1.1.3'
     id 'nu.studer.jooq' version '8.2'
+    id 'org.flywaydb.flyway' version '7.15.0'
 }
 
 group = 'com.jjin'
@@ -16,11 +17,23 @@ repositories {
     mavenCentral()
 }
 
+configurations {
+    flywayMigration
+}
+
+flyway {
+    configurations = ['flywayMigration']
+    url = 'jdbc:postgresql://localhost:5432/flyway_test'
+    user = 'postgres'
+    password = 'test1234'
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-jooq'
     jooqGenerator 'org.postgresql:postgresql'
     runtimeOnly 'org.postgresql:postgresql'
+    flywayMigration 'org.postgresql:postgresql'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
@@ -39,24 +52,35 @@ jooq {
             generationTool {
                 logging = org.jooq.meta.jaxb.Logging.WARN
                 jdbc {
-                    driver = 'org.postgresql.Driver'
-                    url = 'jdbc:postgresql://localhost:5432/subway'
-                    user = 'postgres'
-                    password = 'test1234'
+                    driver = flyway.driver
+                    url = flyway.url
+                    user = flyway.user
+                    password = flyway.password
                 }
                 generator {
                     name = 'org.jooq.codegen.DefaultGenerator'
                     database {
                         name = 'org.jooq.meta.postgres.PostgresDatabase'
                         inputSchema = 'public'
+                        includes = '.*'
+                        excludes = 'flyway_schema_history'
                     }
                     target {
                         packageName = 'com.jjin.jooqtest'
                         directory = 'build/generated-src/jooq/main'
                     }
-                    strategy.name = 'org.jooq.codegen.DefaultGeneratorStrategy'
+                    strategy.name = 'org.jooq.codegen.example.JPrefixGeneratorStrategy'
                 }
             }
         }
     }
+}
+
+tasks.named('generateJooq').configure {
+    dependsOn tasks.named('flywayMigrate')
+
+    inputs.files(fileTree('src/main/resources/db/migration'))
+            .withPropertyName('migrations')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    allInputsDeclared = true
 }

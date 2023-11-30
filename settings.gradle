@@ -1,3 +1,4 @@
 rootProject.name = 'jooqtest'
 include 'dbscan'
+include 'flayway'
 

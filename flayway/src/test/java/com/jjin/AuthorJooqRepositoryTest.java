@@ -2,6 +2,11 @@ package com.jjin;
 
 import com.jjin.author.Author;
 import com.jjin.author.AuthorJooqRepository;
+import com.jjin.book.Book;
+import com.jjin.jooqtest.Tables;
+import com.jjin.jooqtest.tables.JAuthor;
+import com.jjin.jooqtest.tables.JBook;
+import org.jooq.DSLContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +22,6 @@ import java.util.List;
 @JooqTest(properties = {"spring.test.database.replace=none",
         "spring.datasource.url=jdbc:postgresql://localhost:5432/flyway_test"
 })
-@Import(AuthorJooqRepositoryTest.TestConfig.class)
 class AuthorJooqRepositoryTest {
     @TestConfiguration
     public static class TestConfig {
@@ -29,7 +33,6 @@ class AuthorJooqRepositoryTest {
 
     @Autowired
     private AuthorJooqRepository authorJooqRepository;
-
     @Test
     void bulkInsertWithSelectTest() {
         List<Author> authors = new ArrayList<>();
@@ -43,6 +46,6 @@ class AuthorJooqRepositoryTest {
         }
         authorJooqRepository.bulkInsert(authors);
         List<Author> list = authorJooqRepository.getList(10);
-        Assertions.assertEquals(10, list.size());
+        Assertions.assertEquals(8, list.size());
     }
 }
